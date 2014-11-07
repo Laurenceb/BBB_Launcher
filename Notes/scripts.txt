@@ -1,0 +1,61 @@
+Battery_Voltage.sh  Setup_Batmon.sh  Setup_Network.sh
+root@beaglebone:/mnt/microSD/root/Scripts# cat *.sh
+#!/bin/bash
+# Floating point number functions.
+
+#####################################################################
+# Default scale used by float functions.
+
+float_scale=2
+
+
+#####################################################################
+# Evaluate a floating point number expression.
+
+function float_eval()
+{
+    local stat=0
+    local result=0.0
+    if [[ $# -gt 0 ]]; then
+        result=$(echo "scale=$float_scale; $*" | bc -q 2>/dev/null)
+        stat=$?
+        if [[ $stat -eq 0  &&  -z "$result" ]]; then stat=1; fi
+    fi
+    echo $result
+    return $stat
+}
+
+
+#####################################################################
+# Evaluate a floating point number conditional expression.
+
+function float_cond()
+{
+    local cond=0
+    if [[ $# -gt 0 ]]; then
+        cond=$(echo "$*" | bc -q 2>/dev/null)
+        if [[ -z "$cond" ]]; then cond=0; fi
+        if [[ "$cond" != 0  &&  "$cond" != 1 ]]; then cond=0; fi
+    fi
+    local stat=$((cond == 0))
+    return $stat
+}
+
+
+
+voltage=`cat /sys/bus/iio/devices/iio:device0/in_voltage7_raw`
+scale=0.0013184
+echo $(float_eval "$voltage * $scale" )
+#!/bin/sh
+
+echo cape-bone-iio > /sys/devices/bone_capemgr.9/slots
+i2cset -f -y 0 0x24 0x09 0x01
+#cat /sys/bus/iio/devices/iio:device0/in_voltage7_raw to read
+
+#!/bin/sh
+
+export http_proxy=http://mainproxy.nottingham.ac.uk:8080/
+route add default gw 192.168.7.1
+ntpdate -b -s -u pool.ntp.org
+
+root@beaglebone:/mnt/microSD/root/Scripts# 

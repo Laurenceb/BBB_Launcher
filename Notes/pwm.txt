@@ -1,0 +1,45 @@
+PWM units are clocked at 1Ghz
+
+Period should be around 15microseconds
+
+Duty about 50ns
+
+/sys/devices/ocp.3/pwm_test_P8_19
+
+
+11turns primary,
+12 turns secondary
+
+
+import Adafruit_BBIO.PWM as PWM
+#PWM.start("P8_19",0.5,55000) #runs best with 1.2ohm resistor
+#PWM.start("P8_19",0.5,52000) #maybe need to run this twice?
+PWM.start("P8_19",15,49500) #works best with 11 turn primary
+PWM.stop("P8_19")
+
+PWM.cleanup()  #this sometimes causes errors?
+
+
+import Adafruit_BBIO.GPIO as GPIO
+GPIO.setup("P8_14",GPIO.OUT)
+GPIO.output("P8_14",GPIO.HIGH)
+
+
+
+#Gopro mounting
+#it seems that the usb power is turned off when a device is plugged in with the BBB running?!
+#but this only seems to work once per reboot??
+echo on > /sys/bus/usb/devices/usb1/power/level #not needed if device is there at boot
+mount -t vfat /dev/sda1 /media/disk
+/media/disk/DCIM/100GOPRO
+
+#Gopro unmounting
+eject /dev/sda
+echo '1-1' | sudo tee /sys/bus/usb/drivers/usb/unbind #removes it from usb tree
+
+
+GPIO0_7 is the USB shutdown pin / P9_42
+import Adafruit_BBIO.GPIO as GPIO
+GPIO.setup("P9_42",GPIO.OUT)
+GPIO.output("P9_42",GPIO.HIGH)
+
