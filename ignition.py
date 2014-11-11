@@ -17,6 +17,7 @@ def simple_ignite(debuglevel):
 	GPIO.output("P8_14",GPIO.LOW)
 	PWM.stop("P8_19")
 	PWM.cleanup()
+	GPIO.cleanup()
 	failure=0
 	return {'failure':failure}
 
@@ -42,6 +43,7 @@ def selftest(debuglevel):
 		failure=1
 	PWM.stop("P8_19")
 	PWM.cleanup()
+	GPIO.cleanup()
 	#Debug output
 	if debuglevel:
 		print baseline
@@ -73,6 +75,7 @@ def ignite(debuglevel):
 	GPIO.output("P8_14",GPIO.LOW)
 	PWM.stop("P8_19")
 	PWM.cleanup()
+	GPIO.cleanup()
 	#Debug output
 	if debuglevel:
 		print baseline
