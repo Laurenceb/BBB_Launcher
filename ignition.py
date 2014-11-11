@@ -9,7 +9,7 @@ import time
 def simple_ignite(debuglevel):
 	GPIO.setup("P8_14",GPIO.OUT) #This pin fires the ignition
 	GPIO.output("P8_14",GPIO.LOW)
-	PWM.start("P8_19",15,49500) #works best with an 11 turn primary
+	PWM.start("P8_19",15,49500) #works best with an 10 turn primary
 	GPIO.output("P8_14",GPIO.HIGH)
 	if debuglevel:
 		print "Igniting"
@@ -21,14 +21,14 @@ def simple_ignite(debuglevel):
 	return {'failure':failure}
 
 def selftest(debuglevel):
-	threshold=1024 #450mv threshold
-	threshigh=1550 #680mv upper threshold
+	threshold=227 #100mv threshold
+	threshigh=728 #320mv upper threshold
 	ADC.setup()
 	ADC.read_raw("AIN4") #Flush this
 	baseline=ADC.read_raw("AIN4")
 	GPIO.setup("P8_14",GPIO.OUT) #This pin fires the ignition
 	GPIO.output("P8_14",GPIO.LOW)
-	PWM.start("P8_19",15,49500) #works best with an 11 turn primary
+	PWM.start("P8_19",15,49500) #works best with an 10 turn primary
 	time.sleep(0.05) #50ms Settling time for the analogue front end
 	ADC.read_raw("AIN4")
 	selftest=ADC.read_raw("AIN4")
@@ -49,14 +49,14 @@ def selftest(debuglevel):
 	return {'failure':failure, 'baseline':baseline ,'selftest':selftest }
 
 def ignite(debuglevel):
-	threshold=1024 #450mv threshold
-	threshigh=1550 #680mv upper threshold
+	threshold=227 #100mv threshold
+	threshigh=728 #320mv upper threshold
 	ADC.setup()
 	ADC.read_raw("AIN4") #Flush this
 	baseline=ADC.read_raw("AIN4")
 	GPIO.setup("P8_14",GPIO.OUT) #This pin fires the ignition
 	GPIO.output("P8_14",GPIO.LOW)
-	PWM.start("P8_19",15,49500) #works best with an 11 turn primary
+	PWM.start("P8_19",15,49500) #works best with an 10 turn primary
 	time.sleep(0.05) #50ms Settling time for the analogue front end
 	ADC.read_raw("AIN4")
 	selftest=ADC.read_raw("AIN4")
