@@ -21,8 +21,8 @@ def simple_ignite(debuglevel):
 	return {'failure':failure}
 
 def selftest(debuglevel):
-	threshold=1024 #450mv threshold
-	threshigh=1550 #680mv upper threshold
+	threshold=340 #150mv threshold
+	threshigh=1024 #450mv upper threshold
 	ADC.setup()
 	ADC.read_raw("AIN4") #Flush this
 	baseline=ADC.read_raw("AIN4")
@@ -51,8 +51,8 @@ def selftest(debuglevel):
 	return {'failure':failure, 'baseline':baseline ,'selftest':selftest }
 
 def ignite(debuglevel):
-	threshold=1024 #450mv threshold
-	threshigh=1550 #680mv upper threshold
+	threshold=340 #150mv threshold
+	threshigh=1024 #450mv upper threshold
 	ADC.setup()
 	ADC.read_raw("AIN4") #Flush this
 	baseline=ADC.read_raw("AIN4")
