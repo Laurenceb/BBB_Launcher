@@ -162,8 +162,8 @@ def set_modem():
 	#Configure the Packet handler to use seperate FIELD config for RX, and turn off after packet rx
 	set_modem_packet_config = [0x11, 0x12, 0x01, 0x06, 0x80]
 	send_cmd_receive_answer( 1, set_modem_packet_config )
-	#Use CCIT-16 CRC on the packet handler, same as UKHAS protocol
-	set_modem_crc_config = [0x11, 0x12, 0x01, 0x00, 0x05]
+	#Use CCIT-16 CRC with 0xFFFF seed on the packet handler, same as UKHAS protocol
+	set_modem_crc_config = [0x11, 0x12, 0x01, 0x00, 0x85]
 	send_cmd_receive_answer( 1, set_modem_crc_config )
 	#Set the sync word as two bytes 0xD391, this has good autocorrelation 8/1 peak to secondary ratio, default config used, no bit errors, 16 bit
 	set_modem_sync_config = [0x11, 0x11, 0x02, 0x01, 0xD3, 0x91]
