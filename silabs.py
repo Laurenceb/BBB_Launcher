@@ -146,7 +146,27 @@ def set_modem():
 	#Set to CW mode
 	#Sets modem into direct asynchronous 2FSK mode using GPIO0 (UART4 TX on the daughterboard)
 	set_modem_mod_type_command = [0x11, 0x20, 0x01, 0x00, 0x8A]
-	send_cmd_receive_answer( 1, set_modem_mod_type_command);
+	send_cmd_receive_answer( 1, set_modem_mod_type_command)
+	#Also configure the RX packet CRC stuff here, 6 byte payload for FIELD1, using CRC and CRC check for rx with no seed, and 2FSK
+	set_modem_field1_config_command = [0x11, 0x12, 0x03, 0x22, 0x06, 0x00, 0x0A]
+	send_cmd_receive_answer( 1, set_modem_field1_config_command)
+	#Configure the RSSI thresholding for RX mode, with 12dB jump threshold (reset if RSSI changes this much during Rx), RSSI mean with packet toggle
+	#RSSI_THRESH is in dBm, it needs to be converted to 0.5dBm steps offset by ~130
+	rssi = (2*(RSSI_THRESH+130))&0xFF
+	set_modem_rssi_config_command = [0x11, 0x20, 0x04, 0x4A, rssi, 0x0C, 0x12, 0x3E]
+	send_cmd_receive_answer( 1, set_modem_rssi_config_command )
+	#Configure the match value, this constrains the first 4 bytes of data to match $$RO
+	set_modem_match_config_command = [0x11, 0x30, 0x0C, 0x00, 0x24, 0xFF, 0x41, 0x24, 0xFF, 0x42, 0x52, 0xFF, 0x43, 0x4F, 0xFF, 0x44 ]
+	send_cmd_receive_answer( 1, set_modem_match_config_command )
+	#Configure the Packet handler to use seperate FIELD config for RX, and turn off after packet rx
+	set_modem_packet_config = [0x11, 0x12, 0x01, 0x06, 0x80]
+	send_cmd_receive_answer( 1, set_modem_packet_config )
+	#Use CCIT-16 CRC on the packet handler, same as UKHAS protocol
+	set_modem_crc_config = [0x11, 0x12, 0x01, 0x00, 0x05]
+	send_cmd_receive_answer( 1, set_modem_crc_config )
+	#Set the sync word as two bytes 0xD391, this has good autocorrelation 8/1 peak to secondary ratio, default config used, no bit errors, 16 bit
+	set_modem_sync_config = [0x11, 0x11, 0x02, 0x01, 0xD3, 0x91]
+	send_cmd_receive_answer( 1, set_modem_sync_config )
 
 def start_tx( channel):
 	#char change_state_command[] = {0x34, 0x07}; // Change to TX state
