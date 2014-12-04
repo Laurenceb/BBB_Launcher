@@ -7,6 +7,7 @@ import time
 
 #global config
 VCXO_FREQ=26000000#3.3v tcxo used on the board
+RSSI_THRESH=-85#-85dBm RSSI, should be fine with ~1W into a yagi on the ground
 active_level=32#gives ~ 15dBm at 3.3v
 active_shift=300#300 hz tone sep
 active_freq=434750000
