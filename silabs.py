@@ -4,6 +4,7 @@ import Adafruit_BBIO.GPIO as GPIO
 from Adafruit_BBIO.SPI import SPI
 import Adafruit_BBIO.UART as UART
 import time
+import serial
 
 #global config
 VCXO_FREQ=26000000#3.3v tcxo used on the board
@@ -14,20 +15,24 @@ active_freq=434750000
 outdiv=0#set by the frequency config function
 
 #the silabs is on spi1
-spione=SPI(2,0)
+spione=SPI(1,0)
+#and uses uart4 for direct modulation (RTTY at 200baud)
+ser = []
 
 #this function wakes up the radio and puts it into ready mode 
 def setup_radio():
 	spione.mode=0#SPI1 mode 0 at 2Mhz
 	spione.msh=2000000
-	spione.open(2,0) 
+	spione.open(1,0) 
 	UART.setup("UART4")#USART4 TX is used for direct modulation (RTTY at 200 baud), dts file altered to allow RX4, GPIO0_30 to be used for CTS
-	GPIO.setup("GPIO0_30",GPIO.IN#This is the CTS pin, high==CTS
-	GPIO.setup("GPIO1_14",GPIO.IN#The IRQ pin, low==IRQ
+	ser=serial.Serial(port = "/dev/ttyO4", baudrate=200)
+	ser.open()#Open the USART4 port as ser
+	GPIO.setup("GPIO0_30",GPIO.IN)#This is the CTS pin, high==CTS
+	GPIO.setup("GPIO1_14",GPIO.IN)#The IRQ pin, low==IRQ
+	GPIO.setup("GPIO1_15",GPIO.OUT)#This is the SDN pin, high==shutdown
 	GPIO.output("GPIO1_15",GPIO.HIGH)
-	GPIO.setup("GPIO1_15",GPIO.OUT#This is the SDN pin, high==shutdown
+	GPIO.setup("GPIO0_27",GPIO.OUT)#This is the nSEL pin, low==selected
 	GPIO.output("GPIO0_27",GPIO.HIGH)
-	GPIO.setup("GPIO0_27",GPIO.OUT#This is the nSEL pin, low==selected
 	time.sleep(0.005)#5ms sleep at bootup to allow everything to reset
 	GPIO.output("GPIO1_15",GPIO.LOW)#Take the silabs out of shutdown mode
 	#divide VCXO_FREQ into its bytes, MSB first
@@ -40,6 +45,10 @@ def setup_radio():
 	# Clear all pending interrupts and get the interrupt status back
 	get_int_status_command = [0x20, 0x00, 0x00, 0x00]
 	send_cmd_receive_answer( 9,  get_int_status_command)
+	# Read the part info
+	partinfo=send_cmd_receive_answer( 8, [0x01])
+	# This is useful to check if the device is functional - sanity check
+	print(partinfo)
 	# Setup the GPIO pin, note that GPIO1 defaults to CTS, but we need to reset and set GPIO0 to TX direct mode mod input
 	gpio_pin_cfg_command = [0x13, 0x04, 0x00, 0x01, 0x01, 0x00, 0x11, 0x00] # Set GPIO0 input, 1 CTS, rest disabled, NIRQ unchanged, 
 	#SDO=SDO, Max drive strength
@@ -58,11 +67,20 @@ def send_cmd_receive_answer( byteCountRx, Txdata):
 	spione.xfer2(Txdata)
 	GPIO.output("GPIO0_27",GPIO.HIGH)#Deselect the SPI device
 	t=time.time()#This function waits 150ms for CTS
-	while GPIO.read("GPIO0_30")==GPIO.LOW:#Await CTS
+	while not GPIO.input("GPIO0_30"):#Await CTS
 		time.sleep(0.00001)
+		#A one is returned if there is no CTS after 150ms
 		if time.time()>t+0.15:
-			return 1
-	return 0
+			return { 'failure':1 }
+	GPIO.output("GPIO0_27",GPIO.LOW)#Select the SPI device again to allow read, read the 8 reply bytes
+	send=[0x44]
+	#add on the CTS byte
+	send.extend([0x00]*(byteCountRx+1))
+	reply=spione.xfer2(send)
+	#remove the dummy byte and the CTS byte
+	reply=reply[2:len(reply)]
+	GPIO.output("GPIO0_27",GPIO.HIGH)
+	return { 'failure':0, 'reply':reply }
 
 def silabs_read( addr, bytes):
 	#write ss low to start
@@ -100,7 +118,7 @@ def set_frequency( freq):
 		band = 3
 	if (freq < 239000000):
 		outdiv = 16
-		 band = 4
+		band = 4
 	if (freq < 177000000):
 		outdiv = 24
 		band = 5
@@ -136,6 +154,7 @@ def set_deviation( deviation):
 	units_per_hz = ( 0x40000 * outdiv ) / VCXO_FREQ
 	#Set deviation for RTTY
 	modem_freq_dev = units_per_hz * deviation / 2.0
+	modem_freq_dev = int(round(modem_freq_dev))
 	mask = 0xFF;
 	modem_freq_dev_0 = mask & modem_freq_dev
 	modem_freq_dev_1 = mask & (modem_freq_dev >> 8)
